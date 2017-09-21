@@ -48,5 +48,8 @@ Examples:
  - `drush --user=admin mdsr --objectid=2 --objecttype=batch --cmodel=islandora:sp_large_image_cmodel --dsid=TN`
 
 
+## License
 
+[GPLv3](LICENSE.txt)
+Copyright 2017 Leiden University Library
 
