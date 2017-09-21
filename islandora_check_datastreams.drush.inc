@@ -7,7 +7,7 @@
 /**
  * Implements hook_drush_command().
  */
-function ubl_check_datastreams_drush_command() {
+function islandora_check_datastreams_drush_command() {
   $items['check_datastreams'] = array(
     'description' => 'Checks the datastreams of the objects of a specific collection, book, compound or batch set.',
     'options' => array(
@@ -40,8 +40,8 @@ function ubl_check_datastreams_drush_command() {
 /**
  * Implements drush_hook_COMMAND_validate().
  */
-function drush_ubl_check_datastreams_check_datastreams_validate() {
-  module_load_include('inc', 'ubl_check_datastreams', 'includes/ubl_check_datastreams.children');
+function drush_islandora_check_datastreams_check_datastreams_validate() {
+  module_load_include('inc', 'islandora_check_datastreams', 'includes/utilities');
 
   $objectid = drush_get_option('objectid');
   $objecttype = drush_get_option('objecttype');
@@ -80,8 +80,8 @@ function drush_ubl_check_datastreams_check_datastreams_validate() {
 /**
  * Implements drush_hook_COMMAND().
  */
-function drush_ubl_check_datastreams_check_datastreams() {
-  module_load_include('inc', 'ubl_check_datastreams', 'includes/ubl_check_datastreams.children');
+function drush_islandora_check_datastreams_check_datastreams() {
+  module_load_include('inc', 'islandora_check_datastreams', 'includes/utilities');
 
   $objectid = drush_get_option('objectid');
   $objecttype = drush_get_option('objecttype');
@@ -90,19 +90,19 @@ function drush_ubl_check_datastreams_check_datastreams() {
   if ($objecttype === 'collection') {
     $collection = islandora_object_load($objectid);
     if ($collection && in_array('islandora:collectionCModel', $collection->models)) {
-      ubl_check_datastreams_retrieve_all_child_ids($collection, $childids);
+      islandora_check_datastreams_retrieve_all_child_ids($collection, $childids);
     }
   }
   elseif ($objecttype === 'book') {
     $book = islandora_object_load($objectid);
     if ($book && in_array('islandora:bookCModel', $book->models)) {
-      ubl_check_datastreams_retrieve_all_child_ids($book, $childids);
+      islandora_check_datastreams_retrieve_all_child_ids($book, $childids);
     }
   }
   elseif ($objecttype === 'compound') {
     $compound = islandora_object_load($objectid);
     if ($compound && in_array('islandora:compoundCModel', $compound->models)) {
-      ubl_check_datastreams_retrieve_all_child_ids($compound, $childids);
+      islandora_check_datastreams_retrieve_all_child_ids($compound, $childids);
     }
   }
   elseif ($objecttype === 'batch') {
@@ -114,7 +114,7 @@ function drush_ubl_check_datastreams_check_datastreams() {
 
   drush_log(t("Found !count objects, checking...", array('!count' => count($childids))), "ok");
   if (count($childids) > 0) {
-    $dsidsbycmodel = ubl_check_datastreams_dsids_by_cmodel($childids);
+    $dsidsbycmodel = islandora_check_datastreams_dsids_by_cmodel($childids);
     foreach ($dsidsbycmodel as $cmodel => $dsids) {
       $result = '';
       $vdsids = array_values($dsids);
@@ -143,8 +143,8 @@ function drush_ubl_check_datastreams_check_datastreams() {
 /**
  * Implements drush_hook_COMMAND_validate().
  */
-function drush_ubl_check_datastreams_missing_datastreams_report_validate() {
-  if (!drush_ubl_check_datastreams_check_datastreams_validate()) {
+function drush_islandora_check_datastreams_missing_datastreams_report_validate() {
+  if (!drush_islandora_check_datastreams_check_datastreams_validate()) {
     return FALSE;
   }
   $cmodel = drush_get_option('cmodel');
@@ -162,8 +162,8 @@ function drush_ubl_check_datastreams_missing_datastreams_report_validate() {
 /**
  * Implements drush_hook_COMMAND().
  */
-function drush_ubl_check_datastreams_missing_datastreams_report() {
-  module_load_include('inc', 'ubl_check_datastreams', 'includes/ubl_check_datastreams.children');
+function drush_islandora_check_datastreams_missing_datastreams_report() {
+  module_load_include('inc', 'islandora_check_datastreams', 'includes/utilities');
 
   $objectid = drush_get_option('objectid');
   $objecttype = drush_get_option('objecttype');
@@ -171,7 +171,7 @@ function drush_ubl_check_datastreams_missing_datastreams_report() {
   $dsid = drush_get_option('dsid');
   $cmodel2dsids = array($cmodel => array($dsid));
 
-  $csv = ubl_check_datastreams_make_csv_content($objectid, $objecttype, $cmodel2dsids);
+  $csv = islandora_check_datastreams_make_csv_content($objectid, $objecttype, $cmodel2dsids);
 
   print $csv;
 }

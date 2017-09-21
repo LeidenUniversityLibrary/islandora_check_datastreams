@@ -2,65 +2,65 @@
 
 /**
  * @file
- * ubl_check_datastreams
+ * islandora_check_datastreams
  */
 
 // Permissions.
-define('UBL_CHECK_DATASTREAMS_GENERATE', 'Generate missing datastreams');
-define('UBL_CHECK_DATASTREAMS_CHILDREN', 'Check children of an object');
+define('ISLANDORA_CHECK_DATASTREAMS_GENERATE', 'Generate missing datastreams');
+define('ISLANDORA_CHECK_DATASTREAMS_CHILDREN', 'Check children of an object');
 
 /**
  * Implements hook_menu().
  */
-function ubl_check_datastreams_menu() {
+function islandora_check_datastreams_menu() {
   return array(
-    'admin/islandora/ubl_check_datastreams/object/%/datastream/%/generate' => array(
+    'admin/islandora/check_datastreams/object/%/datastream/%/generate' => array(
       'title' => 'Generate missing datastream',
       'type' => MENU_CALLBACK,
       'page callback' => 'drupal_get_form',
-      'page arguments' => array('ubl_check_datastreams_generate_form', 4, 6),
-      'file' => 'includes/ubl_check_datastreams.form.inc',
-      'access arguments' => array(UBL_CHECK_DATASTREAMS_GENERATE),
+      'page arguments' => array('islandora_check_datastreams_generate_form', 4, 6),
+      'file' => 'includes/admin.form.inc',
+      'access arguments' => array(ISLANDORA_CHECK_DATASTREAMS_GENERATE),
     ),
-    'admin/islandora/ubl_check_datastreams/check_children' => array(
+    'admin/islandora/check_datastreams/check_children' => array(
       'title' => 'Check children of an object or batch',
       'type' => MENU_SUGGESTED_ITEM,
       'page callback' => 'drupal_get_form',
-      'page arguments' => array('ubl_check_datastreams_children_form'),
-      'file' => 'includes/ubl_check_datastreams.form.inc',
-      'access arguments' => array(UBL_CHECK_DATASTREAMS_CHILDREN),
+      'page arguments' => array('islandora_check_datastreams_children_form'),
+      'file' => 'includes/admin.form.inc',
+      'access arguments' => array(ISLANDORA_CHECK_DATASTREAMS_CHILDREN),
     ),
-    'admin/islandora/ubl_check_datastreams/check_children/%/%' => array(
+    'admin/islandora/check_datastreams/check_children/%/%' => array(
       'title' => 'Check children of an object or batch',
       'type' => MENU_CALLBACK,
       'page callback' => 'drupal_get_form',
-      'page arguments' => array('ubl_check_datastreams_children_form', 4, 5),
-      'file' => 'includes/ubl_check_datastreams.form.inc',
-      'access arguments' => array(UBL_CHECK_DATASTREAMS_CHILDREN),
+      'page arguments' => array('islandora_check_datastreams_children_form', 4, 5),
+      'file' => 'includes/admin.form.inc',
+      'access arguments' => array(ISLANDORA_CHECK_DATASTREAMS_CHILDREN),
     ),
     'islandora_batch/reports/queue/%islandora_batch_set/check_datastreams' => array(
       'title' => 'Check datastreams of batch',
       'type' => MENU_LOCAL_ACTION,
       'page callback' => 'drupal_get_form',
       'page arguments' => array(
-        'ubl_check_datastreams_children_form',
+        'islandora_check_datastreams_children_form',
         3,
         'batch',
       ),
-      'file' => 'includes/ubl_check_datastreams.form.inc',
-      'access arguments' => array(UBL_CHECK_DATASTREAMS_CHILDREN),
+      'file' => 'includes/admin.form.inc',
+      'access arguments' => array(ISLANDORA_CHECK_DATASTREAMS_CHILDREN),
     ),
     'admin/reports/islandora_batch_queue/%islandora_batch_set/check_datastreams' => array(
       'title' => 'Check datastreams of batch',
       'type' => MENU_LOCAL_ACTION,
       'page callback' => 'drupal_get_form',
       'page arguments' => array(
-        'ubl_check_datastreams_children_form',
+        'islandora_check_datastreams_children_form',
         3,
         'batch',
       ),
-      'file' => 'includes/ubl_check_datastreams.form.inc',
-      'access arguments' => array(UBL_CHECK_DATASTREAMS_CHILDREN),
+      'file' => 'includes/admin.form.inc',
+      'access arguments' => array(ISLANDORA_CHECK_DATASTREAMS_CHILDREN),
     ),
   );
 }
@@ -68,13 +68,13 @@ function ubl_check_datastreams_menu() {
 /**
  * Implements hook_permission().
  */
-function ubl_check_datastreams_permission() {
+function islandora_check_datastreams_permission() {
   return array(
-    UBL_CHECK_DATASTREAMS_GENERATE => array(
+    ISLANDORA_CHECK_DATASTREAMS_GENERATE => array(
       'title' => t('Generate missing datastreams'),
       'description' => t('Generate missing datastreams'),
     ),
-    UBL_CHECK_DATASTREAMS_CHILDREN => array(
+    ISLANDORA_CHECK_DATASTREAMS_CHILDREN => array(
       'title' => t('Check children of an object'),
       'description' => t('Check children of an object'),
     ),
@@ -84,8 +84,8 @@ function ubl_check_datastreams_permission() {
 /**
  * Implements hook_theme_registry_alter().
  */
-function ubl_check_datastreams_theme_registry_alter(&$theme_registry) {
-  $module_path = drupal_get_path('module', 'ubl_check_datastreams');
+function islandora_check_datastreams_theme_registry_alter(&$theme_registry) {
+  $module_path = drupal_get_path('module', 'islandora_check_datastreams');
   $templatepath = $module_path . '/theme';
   $theme_registry['islandora_default_edit']['template'] = 'ubl-object-edit';
   $theme_registry['islandora_default_edit']['path'] = $templatepath;
@@ -94,12 +94,12 @@ function ubl_check_datastreams_theme_registry_alter(&$theme_registry) {
 /**
  * Implements hook_preprocess_theme().
  */
-function ubl_check_datastreams_preprocess_islandora_default_edit(array &$variables) {
+function islandora_check_datastreams_preprocess_islandora_default_edit(array &$variables) {
   $islandora_object = $variables['islandora_object'];
 
   $rows = array();
 
-  $info = ubl_check_datastreams_datastream_property_info($islandora_object, TRUE);
+  $info = islandora_check_datastreams_datastream_property_info($islandora_object, TRUE);
   foreach ($info as $dsid => $dsinfo) {
     if (!$dsinfo['isavailable']) {
       $row = array();
@@ -144,20 +144,20 @@ function ubl_check_datastreams_preprocess_islandora_default_edit(array &$variabl
   }
 
   if (in_array('islandora:bookCModel', $islandora_object->models)) {
-    $variables['check_ds_children'] = l(t('Check the pages of this book'), 'admin/islandora/ubl_check_datastreams/check_children/' . $islandora_object->id . '/' . 'book');
+    $variables['check_ds_children'] = l(t('Check the pages of this book'), 'admin/islandora/check_datastreams/check_children/' . $islandora_object->id . '/' . 'book');
   }
   elseif (in_array('islandora:collectionCModel', $islandora_object->models)) {
-    $variables['check_ds_children'] = l(t('Check the items of this collection'), 'admin/islandora/ubl_check_datastreams/check_children/' . $islandora_object->id . '/' . 'collection');
+    $variables['check_ds_children'] = l(t('Check the items of this collection'), 'admin/islandora/check_datastreams/check_children/' . $islandora_object->id . '/' . 'collection');
   }
   elseif (in_array('islandora:compoundCModel', $islandora_object->models)) {
-    $variables['check_ds_children'] = l(t('Check the items of this compound'), 'admin/islandora/ubl_check_datastreams/check_children/' . $islandora_object->id . '/' . 'compound');
+    $variables['check_ds_children'] = l(t('Check the items of this compound'), 'admin/islandora/check_datastreams/check_children/' . $islandora_object->id . '/' . 'compound');
   }
 }
 
 /**
  * Helper function to get the info about the properties of a datastream.
  */
-function ubl_check_datastreams_datastream_property_info($object, $includelink = FALSE) {
+function islandora_check_datastreams_datastream_property_info($object, $includelink = FALSE) {
   module_load_include('inc', 'islandora', 'includes/utilities');
 
   static $generatable = NULL;
@@ -190,16 +190,16 @@ function ubl_check_datastreams_datastream_property_info($object, $includelink = 
     $results[$dsid]['isrequired'] = !(isset($dsreq['optional']) && $dsreq['optional']);
     $results[$dsid]['isgeneratable'] = in_array($dsid, $generatable);
     if ($includelink) {
-      $results[$dsid]['generatelink'] = ubl_check_datastreams_generate_link($object, $dsid);
+      $results[$dsid]['generatelink'] = islandora_check_datastreams_generate_link($object, $dsid);
     }
   }
   if (module_load_include('inc', 'islandora_handle', 'includes/handle') !== FALSE) {
     $handle_results = islandora_handle_retrieve_configurations_by_cmodels($object->models);
-    $results['HDL']['isavailable'] = ubl_check_datastreams_has_handle($object);
+    $results['HDL']['isavailable'] = islandora_check_datastreams_has_handle($object);
     $results['HDL']['isrequired'] = (count($handle_results) > 0);
     if ($includelink) {
       $results['HDL']['isgeneratable'] = TRUE;
-      $results['HDL']['generatelink'] = ubl_check_datastreams_generate_link($object, 'HDL');
+      $results['HDL']['generatelink'] = islandora_check_datastreams_generate_link($object, 'HDL');
     }
   }
   if (in_array('islandora:pageCModel', $object->models)) {
@@ -210,7 +210,7 @@ function ubl_check_datastreams_datastream_property_info($object, $includelink = 
       $results['DIMENSIONS']['isrequired'] = TRUE;
       if ($includelink) {
         $results['DIMENSIONS']['isgeneratable'] = TRUE;
-        $results['DIMENSIONS']['generatelink'] = ubl_check_datastreams_generate_link($object, 'DIMENSIONS');
+        $results['DIMENSIONS']['generatelink'] = islandora_check_datastreams_generate_link($object, 'DIMENSIONS');
       }
     }
   }
@@ -220,7 +220,7 @@ function ubl_check_datastreams_datastream_property_info($object, $includelink = 
 /**
  * Helper function for checking if the object has a handle.
  */
-function ubl_check_datastreams_has_handle($object) {
+function islandora_check_datastreams_has_handle($object) {
   if (isset($object['MODS'])) {
     $xpath = "/mods:mods/mods:identifier[@type='hdl']";
     $content = $object['MODS']->content;
@@ -245,7 +245,7 @@ function ubl_check_datastreams_has_handle($object) {
 /**
  * Helper function for generating a link for regeneration of a datastream.
  */
-function ubl_check_datastreams_generate_link($object, $dsid) {
+function islandora_check_datastreams_generate_link($object, $dsid) {
   $url = '';
   $options = array();
 
@@ -291,7 +291,7 @@ function ubl_check_datastreams_generate_link($object, $dsid) {
   }
 
   if (!$url && $cangenerate) {
-    $url = 'admin/islandora/ubl_check_datastreams/object/' . $object->id . '/datastream/' . $dsid . '/generate';
+    $url = 'admin/islandora/check_datastreams/object/' . $object->id . '/datastream/' . $dsid . '/generate';
   }
 
   if ($url) {

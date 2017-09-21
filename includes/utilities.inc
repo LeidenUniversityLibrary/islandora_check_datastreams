@@ -9,7 +9,7 @@
 /**
  * Function that retrieves an associative array of all children of the parent.
  */
-function ubl_check_datastreams_retrieve_all_child_ids($parent, &$childids) {
+function islandora_check_datastreams_retrieve_all_child_ids($parent, &$childids) {
   module_load_include('inc', 'islandora', 'includes/utilities');
   module_load_include('inc', 'islandora_paged_content', 'includes/utilities');
   module_load_include('inc', 'islandora_batch', 'includes/db');
@@ -22,7 +22,7 @@ function ubl_check_datastreams_retrieve_all_child_ids($parent, &$childids) {
 	$obj = islandora_object_load($cid);
 	if ($obj) {
 	  $childids[$cid] = $cid;
-	  ubl_check_datastreams_retrieve_all_child_ids($obj, $childids);
+	  islandora_check_datastreams_retrieve_all_child_ids($obj, $childids);
         }
       }
     }
@@ -34,7 +34,7 @@ function ubl_check_datastreams_retrieve_all_child_ids($parent, &$childids) {
 	$obj = islandora_object_load($partpid);
 	if ($obj) {
 	  $childids[$partpid] = $partpid;
-	  ubl_check_datastreams_retrieve_all_child_ids($obj, $childids);
+	  islandora_check_datastreams_retrieve_all_child_ids($obj, $childids);
         }
       }
     }
@@ -53,14 +53,14 @@ function ubl_check_datastreams_retrieve_all_child_ids($parent, &$childids) {
 /**
  * Function that returns an associative array by cmodel, dsid and count.
  */
-function ubl_check_datastreams_dsids_by_cmodel($childids) {
+function islandora_check_datastreams_dsids_by_cmodel($childids) {
   $dsidsbycmodel = array();
   foreach ($childids as $childid) {
     $child = islandora_object_load($childid);
     if ($child) {
-      $cmodels = ubl_check_datastreams_get_cmodel_string($child);
+      $cmodels = islandora_check_datastreams_get_cmodel_string($child);
 
-      $info = ubl_check_datastreams_datastream_property_info($child);
+      $info = islandora_check_datastreams_datastream_property_info($child);
       foreach ($info as $dsid => $dsinfo) {
         if (!isset($dsidsbycmodel[$cmodels])) {
           $dsidsbycmodel[$cmodels] = array();
@@ -90,7 +90,7 @@ function ubl_check_datastreams_dsids_by_cmodel($childids) {
 /**
  * Function that returns a CSV formatted string of islandora IDs and DSIDs.
  */
-function ubl_check_datastreams_make_csv_content($objectid, $objecttype, $cmodel2dsids) {
+function islandora_check_datastreams_make_csv_content($objectid, $objecttype, $cmodel2dsids) {
   $csv = '';
   $childids = array();
   if ($objecttype === 'batch') {
@@ -101,16 +101,16 @@ function ubl_check_datastreams_make_csv_content($objectid, $objecttype, $cmodel2
   }
   else {
     $parent = islandora_object_load($objectid);
-    ubl_check_datastreams_retrieve_all_child_ids($parent, $childids);
+    islandora_check_datastreams_retrieve_all_child_ids($parent, $childids);
   }
   foreach ($childids as $childid) {
     foreach ($cmodel2dsids as $filtercmodel => $dsids) {
       foreach ($dsids as $filterdsid) {
         $child = islandora_object_load($childid);
         if ($child) {
-          $info = ubl_check_datastreams_datastream_property_info($child);
+          $info = islandora_check_datastreams_datastream_property_info($child);
           if (!(isset($info[$filterdsid]['isavailable']) && $info[$filterdsid]['isavailable'])) {
-            $cmodels = ubl_check_datastreams_get_cmodel_string($child);
+            $cmodels = islandora_check_datastreams_get_cmodel_string($child);
             if ($filtercmodel === $cmodels) {
               $csv .= $child->id . ";" . $filterdsid . ";\n";
             }
@@ -127,7 +127,7 @@ function ubl_check_datastreams_make_csv_content($objectid, $objecttype, $cmodel2
 /**
  * Helper function to get the cmodels as a string.
  */
-function ubl_check_datastreams_get_cmodel_string($object) {
+function islandora_check_datastreams_get_cmodel_string($object) {
   $cmodels = implode(',', $object->models);
   $cmodels = str_replace(',fedora-system:FedoraObject-3.0', '', $cmodels);
   $cmodels = str_replace('fedora-system:FedoraObject-3.0,', '', $cmodels);

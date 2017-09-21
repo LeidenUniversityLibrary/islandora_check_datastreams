@@ -14,7 +14,7 @@
  * @param array $form_state
  *   The Drupal form state.
  */
-function ubl_check_datastreams_generate_form(array $form, array &$form_state, $objectid, $dsid) {
+function islandora_check_datastreams_generate_form(array $form, array &$form_state, $objectid, $dsid) {
   $form = array();
 
   $form['generate'] = array(
@@ -46,51 +46,15 @@ function ubl_check_datastreams_generate_form(array $form, array &$form_state, $o
  * @param array $form_state
  *   The Drupal form state.
  */
-function ubl_check_datastreams_generate_form_submit(array $form, array &$form_state) {
+function islandora_check_datastreams_generate_form_submit(array $form, array &$form_state) {
   $objectid = $form_state['values']['objectid'];
   $dsid = $form_state['values']['dsid'];
 
   $object = islandora_object_load($objectid);
   $success = FALSE;
   if ($object) {
-    if ($dsid === 'JPG') {
-      if (module_load_include('inc', 'islandora_large_image', 'includes/derivatives') !== FALSE) {
-        islandora_large_image_create_jpg_derivative($object, FALSE);
-        $success = isset($object[$dsid]);
-      }
-    }
-    elseif ($dsid === 'JP2') {
-      if (module_load_include('inc', 'islandora_large_image', 'includes/derivatives') !== FALSE) {
-        islandora_large_image_create_jp2_derivative($object, FALSE);
-        $success = isset($object[$dsid]);
-      }
-    }
-    elseif ($dsid === 'TN') {
-      if (module_load_include('inc', 'islandora_large_image', 'includes/derivatives') !== FALSE) {
-        islandora_large_image_create_tn_derivative($object, FALSE);
-        $success = isset($object[$dsid]);
-      }
-    }
-    elseif ($dsid === 'PDF') {
-      if (module_load_include('inc', 'islandora_solution_pack_pdf', 'includes/derivatives') !== FALSE) {
-        islandora_pdf_add_pdfa_derivative($object, FALSE);
-        $success = isset($object[$dsid]);
-      }
-    }
-    elseif ($dsid === 'OCR') {
-      if (module_load_include('inc', 'islandora_ocr', 'includes/derivatives') !== FALSE) {
-        islandora_ocr_derive_ocr($object, FALSE);
-        $success = isset($object[$dsid]);
-      }
-    }
-    elseif ($dsid === 'HOCR') {
-      if (module_load_include('inc', 'islandora_ocr', 'includes/derivatives') !== FALSE) {
-        islandora_ocr_derive_hocr($object, FALSE);
-        $success = isset($object[$dsid]);
-      }
-    }
-    elseif ($dsid === 'HDL') {
-      if (module_load_include('inc', 'islandora_handle', 'includes/derivatives') !== FALSE) {
+    if ($dsid === 'HDL') {
+      if (module_load_include('inc', 'islandora_handle') !== FALSE) {
         if (function_exists('islandora_handle_append_handle_from_configuration')) {
           $result = islandora_handle_append_handle_from_configuration($object, FALSE, array('destination_dsid' => 'MODS'));
         }
@@ -105,9 +69,23 @@ function ubl_check_datastreams_generate_form_submit(array $form, array &$form_st
     }
     elseif ($dsid === 'DIMENSIONS') {
       if ($object['JP2']) {
-        if (module_load_include('inc', 'islandora_paged_content', 'includes/utilities') !== FALSE) {
+        if (module_load_include('inc', 'islandora_paged_content') !== FALSE) {
           islandora_paged_content_add_dimensions_relationships($object);
           $success = TRUE;
+        }
+      }
+    }
+    else {
+      module_load_include('inc', 'islandora', 'includes/derivatives');
+      $logging = islandora_do_derivatives($object, array( 'destination_dsid' => $dsid));
+      if (count($logging) > 0) {
+        foreach ($logging as $log) {
+          if (isset($log['success']) && $log['success']) {
+            $success = TRUE;
+          }
+          else {
+            $success = FALSE;
+          }
         }
       }
     }
@@ -131,8 +109,8 @@ function ubl_check_datastreams_generate_form_submit(array $form, array &$form_st
  * @param array $form_state
  *   The Drupal form state.
  */
-function ubl_check_datastreams_children_form(array $form, array &$form_state, $objectid = FALSE, $objecttype = FALSE) {
-  module_load_include('inc', 'ubl_check_datastreams', 'includes/ubl_check_datastreams.children');
+function islandora_check_datastreams_children_form(array $form, array &$form_state, $objectid = FALSE, $objecttype = FALSE) {
+  module_load_include('inc', 'islandora_check_datastreams', 'includes/utilities');
   module_load_include('inc', 'islandora_batch', 'includes/db');
   module_load_include('inc', 'islandora', 'includes/utilities');
   module_load_include('inc', 'islandora_paged_content', 'includes/utilities');
@@ -173,19 +151,19 @@ function ubl_check_datastreams_children_form(array $form, array &$form_state, $o
   if ($objecttype === 'collection') {
     $collection = islandora_object_load($objectid);
     if ($collection && in_array('islandora:collectionCModel', $collection->models)) {
-      ubl_check_datastreams_retrieve_all_child_ids($collection, $childids);
+      islandora_check_datastreams_retrieve_all_child_ids($collection, $childids);
     }
   }
   elseif ($objecttype === 'book') {
     $book = islandora_object_load($objectid);
     if ($book && in_array('islandora:bookCModel', $book->models)) {
-      ubl_check_datastreams_retrieve_all_child_ids($book, $childids);
+      islandora_check_datastreams_retrieve_all_child_ids($book, $childids);
     }
   }
   elseif ($objecttype === 'compound') {
     $compound = islandora_object_load($objectid);
     if ($compound && in_array('islandora:compoundCModel', $compound->models)) {
-      ubl_check_datastreams_retrieve_all_child_ids($compound, $childids);
+      islandora_check_datastreams_retrieve_all_child_ids($compound, $childids);
     }
   }
   elseif ($objecttype === 'batch') {
@@ -196,7 +174,7 @@ function ubl_check_datastreams_children_form(array $form, array &$form_state, $o
   }
 
   if (count($childids) > 0) {
-    $dsidsbycmodel = ubl_check_datastreams_dsids_by_cmodel($childids);
+    $dsidsbycmodel = islandora_check_datastreams_dsids_by_cmodel($childids);
     foreach ($dsidsbycmodel as $cmodel => $dsids) {
       $vdsids = array_values($dsids);
       $total = $vdsids[0]['total'];
@@ -246,12 +224,12 @@ function ubl_check_datastreams_children_form(array $form, array &$form_state, $o
 /**
  * The form submit for checking the children of a book, collection or batch.
  */
-function ubl_check_datastreams_children_form_submit(array $form, array &$form_state) {
+function islandora_check_datastreams_children_form_submit(array $form, array &$form_state) {
   if ($form_state['clicked_button']['#id'] === 'filter') {
     $type = $form_state['values']['type'];
     $identifier = $form_state['values']['identifier'];
 
-    $form_state['redirect'] = 'admin/islandora/ubl_check_datastreams/check_children/' . $identifier . '/' . $type;
+    $form_state['redirect'] = 'admin/islandora/check_datastreams/check_children/' . $identifier . '/' . $type;
   }
   else {
     $iscsvneeded = FALSE;
@@ -271,7 +249,7 @@ function ubl_check_datastreams_children_form_submit(array $form, array &$form_st
     if ($iscsvneeded) {
       $objecttype = $form_state['values']['type'];
       $objectid = $form_state['values']['identifier'];
-      $csv = ubl_check_datastreams_make_csv_content($objectid, $objecttype, $cmodel2dsids);
+      $csv = islandora_check_datastreams_make_csv_content($objectid, $objecttype, $cmodel2dsids);
       $filepath = "temporary://missing.csv";
       $file = file_save_data($csv, $filepath, FILE_EXISTS_REPLACE);
       $headers = array(
