@@ -214,7 +214,9 @@ function islandora_check_datastreams_datastream_property_info($object, $includel
   }
   if (module_load_include('inc', 'islandora_handle', 'includes/handle') !== FALSE) {
     $handle_results = islandora_handle_retrieve_configurations_by_cmodels($object->models);
-    $results['HDL']['isavailable'] = islandora_handle_query_for_handle($object);
+    $handler_class = islandora_handle_retrieve_selected_handler();
+    $handler = new $handler_class($object);
+    $results['HDL']['isavailable'] = $handler->readHandle($object);
     $results['HDL']['isrequired'] = (count($handle_results) > 0);
     if ($includelink) {
       $results['HDL']['isgeneratable'] = TRUE;
