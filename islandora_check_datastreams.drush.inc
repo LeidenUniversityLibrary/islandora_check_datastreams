@@ -45,12 +45,14 @@ function islandora_check_datastreams_drush_command() {
       'objectid' => 'The object id of a specific collection, book or compound, or the batch set id.',
       'objecttype' => 'The type of the object. Possible values are: collection, book, compound or batch.',
       'cmodel' => 'The content model of the objects of the datastreams you are interested in.',
-      'dsid' => 'The datastream id of the objects you want in the report..',
+      'dsid' => 'The datastream id of the objects you want in the report.',
+      'dsids' => 'Same as --dsid, allows multiple datastream ids. Should be a comma separated list of datastream ids.',
     ),
     'aliases' => array('mdsr'),
     'examples' => array(
       'drush --user=admin missing_datastreams_report --objectid=islandora:root --objecttype=collection --cmodel=islandora:pageCModel --dsid=JP2',
       'drush --user=admin mdsr --objectid=2 --objecttype=batch --cmodel=islandora:sp_large_image_cmodel --dsid=TN',
+      'drush --user=admin mdsr --objectid=2 --objecttype=batch --cmodel=islandora:sp_large_image_cmodel --dsids=JP2,TN',
     ),
   );
   return $items;
@@ -163,17 +165,22 @@ function drush_islandora_check_datastreams_check_datastreams() {
  * Implements drush_hook_COMMAND_validate().
  */
 function drush_islandora_check_datastreams_missing_datastreams_report_validate() {
+  module_load_include('inc', 'islandora', 'includes/utilities');
+
   if (!drush_islandora_check_datastreams_check_datastreams_validate()) {
     return FALSE;
   }
   $cmodel = drush_get_option('cmodel');
-  $dsid = drush_get_option('dsid');
+  $dsid = drush_get_option(array('dsid', 'dsids'));
 
   if ($cmodel === NULL || strlen($cmodel) == 0) {
     return drush_set_error("cmodel should be a valid cmodel");
   }
-  if ($dsid === NULL || strlen($dsid) == 0) {
-    return drush_set_error("dsid should be a valid datastream ID");
+  $dsids = explode(',', $dsid);
+  foreach ($dsids as $ds) {
+    if (!islandora_is_valid_dsid($ds)) {
+      return drush_set_error("dsid should be (a) valid datastream ID(s)");
+    }
   }
   return TRUE;
 }
@@ -187,8 +194,9 @@ function drush_islandora_check_datastreams_missing_datastreams_report() {
   $objectid = drush_get_option('objectid');
   $objecttype = drush_get_option('objecttype');
   $cmodel = drush_get_option('cmodel');
-  $dsid = drush_get_option('dsid');
-  $cmodel2dsids = array($cmodel => array($dsid));
+  $dsid = drush_get_option(array('dsid', 'dsids'));
+  $dsids = explode(',', $dsid);
+  $cmodel2dsids = array($cmodel => $dsids);
 
   $csv = islandora_check_datastreams_make_csv_content($objectid, $objecttype, $cmodel2dsids);
 
