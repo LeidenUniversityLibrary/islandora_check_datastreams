@@ -80,7 +80,7 @@ function islandora_check_datastreams_generate_form_submit(array $form, array &$f
         else if (function_exists('islandora_handle_append_handles_from_configuration')) {
           $result = islandora_handle_append_handles_from_configuration($object, FALSE, array('destination_dsid' => 'MODS'));
         }
-        if (isset($result) && $result['success'] === TRUE) {
+        if (isset($result['success']) && $result['success'] === TRUE) {
           islandora_handle_add_to_dc_datastream($object);
           $success = TRUE;
         }
