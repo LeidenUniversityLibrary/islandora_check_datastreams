@@ -120,7 +120,7 @@ function islandora_check_datastreams_preprocess_islandora_default_edit(array &$v
 
   $info = islandora_check_datastreams_datastream_property_info($islandora_object, TRUE);
   foreach ($info as $dsid => $dsinfo) {
-    if (!$dsinfo['isavailable']) {
+    if (!$dsinfo['isavailable'] || isset($dsinfo['remark'])) {
       $row = array();
       $row[] = array(
         'class' => 'datastream-id',
@@ -130,9 +130,27 @@ function islandora_check_datastreams_preprocess_islandora_default_edit(array &$v
         'class' => 'datastream-required',
         'data' => $dsinfo['isrequired'] ? t('required') : t('optional'),
       );
+      $remark = '';
+      if (isset($dsinfo['remark'])) {
+        $remark = $dsinfo['remark'];
+      }
+      elseif ($dsinfo['isrequired']) {
+        if ($dsid === 'DIMENSIONS') {
+          $remark = t('Missing required dimensions');
+        }
+        elseif ($dsid === 'HDL') {
+          $remark = t('Missing required handle');
+        }
+        else {
+          $remark = t('Missing required datastream');
+        }
+      }
+      else {
+        $remark = '-';
+      }
       $row[] = array(
         'class' => 'datastream-remarks',
-        'data' => $dsinfo['isrequired'] ? t('Missing required datastream') : t('-'),
+        'data' => $remark,
       );
       $row[] = array(
         'class' => 'datastream-operations',
@@ -213,7 +231,17 @@ function islandora_check_datastreams_datastream_property_info($object, $includel
     }
   }
   if (module_load_include('inc', 'islandora_handle', 'includes/handle') !== FALSE) {
-    if (function_exists('islandora_handle_retrieve_selected_handler')) {
+    module_load_include('inc', 'islandora_handle', 'includes/derivatives');
+    $isgeneratable = TRUE;
+    if (variable_get('islandora_handle_check_metadata', FALSE) && function_exists('islandora_handle_get_handle_from_metadata')) {
+      $handle = islandora_handle_get_handle_from_metadata($object);
+      $results['HDL']['isavailable'] = $handle;
+      $isgeneratable = ($handle === FALSE);
+      if ($handle !== FALSE) {
+        $results['HDL']['remark'] = t('Handle %handle found in metadata', array('%handle' => $handle));
+      }
+    }
+    elseif (function_exists('islandora_handle_retrieve_selected_handler')) {
       $handler_class = islandora_handle_retrieve_selected_handler();
       $handler = new $handler_class();
       $results['HDL']['isavailable'] = $handler->readHandle($object);
@@ -224,8 +252,10 @@ function islandora_check_datastreams_datastream_property_info($object, $includel
     $handle_results = islandora_handle_retrieve_configurations_by_cmodels($object->models);
     $results['HDL']['isrequired'] = (count($handle_results) > 0);
     if ($includelink) {
-      $results['HDL']['isgeneratable'] = TRUE;
-      $results['HDL']['generatelink'] = islandora_check_datastreams_generate_link($object, 'HDL');
+      $results['HDL']['isgeneratable'] = $isgeneratable;
+      if ($isgeneratable) {
+        $results['HDL']['generatelink'] = islandora_check_datastreams_generate_link($object, 'HDL');
+      }
     }
   }
   if (in_array('islandora:pageCModel', $object->models)) {
