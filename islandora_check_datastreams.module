@@ -9,8 +9,8 @@
  *
  *  This file is part of islandora_check_datastreams.
  *
- *  islandora_check_datastreams is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
+ *  islandora_check_datastreams is free software: you can redistribute it and/or
+ *  modify it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
  *
@@ -21,7 +21,6 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- *
  */
 
 // Permissions.
@@ -120,7 +119,7 @@ function islandora_check_datastreams_preprocess_islandora_default_edit(array &$v
 
   $info = islandora_check_datastreams_datastream_property_info($islandora_object, TRUE);
   foreach ($info as $dsid => $dsinfo) {
-    if (!$dsinfo['isavailable']) {
+    if (!$dsinfo['available']) {
       $row = array();
       $row[] = array(
         'class' => 'datastream-id',
@@ -128,15 +127,16 @@ function islandora_check_datastreams_preprocess_islandora_default_edit(array &$v
       );
       $row[] = array(
         'class' => 'datastream-required',
-        'data' => $dsinfo['isrequired'] ? t('required') : t('optional'),
+        'data' => $dsinfo['required'] ? t('required') : t('optional'),
       );
+      $remark = isset($dsinfo['remark']) ? $dsinfo['remark'] : ($dsinfo['required'] ? t('Missing required datastream') : t('-'));
       $row[] = array(
         'class' => 'datastream-remarks',
-        'data' => $dsinfo['isrequired'] ? t('Missing required datastream') : t('-'),
+        'data' => $remark,
       );
       $row[] = array(
         'class' => 'datastream-operations',
-        'data' => ($dsinfo['isgeneratable'] && isset($dsinfo['generatelink'])) ? $dsinfo['generatelink'] : '',
+        'data' => ($dsinfo['generatable'] && isset($dsinfo['generatelink'])) ? $dsinfo['generatelink'] : '',
       );
       $rows[] = $row;
     }
@@ -174,129 +174,71 @@ function islandora_check_datastreams_preprocess_islandora_default_edit(array &$v
 }
 
 /**
- * Helper function to get the info about the properties of a datastream.
+ * Implements hook_hook_info().
  */
-function islandora_check_datastreams_datastream_property_info($object, $includelink = FALSE) {
-  module_load_include('inc', 'islandora', 'includes/utilities');
-
-  static $generatable = NULL;
-  if (is_null($generatable)) {
-    if (module_load_include('inc', 'islandora_large_image', 'includes/derivatives') !== FALSE) {
-      $generatable[] = 'JP2';
-      $generatable[] = 'JPG';
-      $generatable[] = 'TN';
-    }
-    if (module_load_include('inc', 'islandora_pdf', 'includes/derivatives') !== FALSE) {
-      $generatable[] = 'PDF';
-    }
-    if (module_load_include('inc', 'islandora_ocr', 'includes/derivatives') !== FALSE) {
-      $generatable[] = 'OCR';
-      $generatable[] = 'HOCR';
-    }
-    if (module_load_include('inc', 'islandora_handle', 'includes/handle') !== FALSE) {
-      $generatable[] = 'HDL';
-    }
-    if (module_load_include('inc', 'islandora_paged_content', 'includes/utilities') !== FALSE) {
-      $generatable[] = 'DIMENSIONS';
-    }
-  }
-
-  $models = $object->models;
-  $dsreqs = islandora_get_datastreams_requirements_from_models($models);
-  $results = array();
-  foreach ($dsreqs as $dsid => $dsreq) {
-    $results[$dsid]['isavailable'] = isset($object[$dsid]);
-    $results[$dsid]['isrequired'] = !(isset($dsreq['optional']) && $dsreq['optional']);
-    $results[$dsid]['isgeneratable'] = in_array($dsid, $generatable);
-    if ($includelink) {
-      $results[$dsid]['generatelink'] = islandora_check_datastreams_generate_link($object, $dsid);
-    }
-  }
-  if (module_load_include('inc', 'islandora_handle', 'includes/handle') !== FALSE) {
-    if (function_exists('islandora_handle_retrieve_selected_handler')) {
-      $handler_class = islandora_handle_retrieve_selected_handler();
-      $handler = new $handler_class();
-      $results['HDL']['isavailable'] = $handler->readHandle($object);
-    }
-    elseif (function_exists('islandora_handle_query_for_handle')) {
-      $results['HDL']['isavailable'] = islandora_handle_query_for_handle($object);
-    }
-    $handle_results = islandora_handle_retrieve_configurations_by_cmodels($object->models);
-    $results['HDL']['isrequired'] = (count($handle_results) > 0);
-    if ($includelink) {
-      $results['HDL']['isgeneratable'] = TRUE;
-      $results['HDL']['generatelink'] = islandora_check_datastreams_generate_link($object, 'HDL');
-    }
-  }
-  if (in_array('islandora:pageCModel', $object->models)) {
-    if (module_load_include('inc', 'islandora_paged_content', 'includes/utilities') !== FALSE) {
-      $hasjp2 = isset($object['JP2']);
-      $isavailable = $hasjp2 && $object['JP2']->relationships->get(ISLANDORA_RELS_EXT_URI, 'width');
-      $results['DIMENSIONS']['isavailable'] = $isavailable;
-      $results['DIMENSIONS']['isrequired'] = TRUE;
-      if ($includelink) {
-        $results['DIMENSIONS']['isgeneratable'] = TRUE;
-        $results['DIMENSIONS']['generatelink'] = islandora_check_datastreams_generate_link($object, 'DIMENSIONS');
-      }
-    }
-  }
-  return $results;
+function islandora_check_datastreams_hook_info() {
+  return array(
+    'check_datastreams_info' => array(
+      'group' => 'check_datastreams',
+    ),
+  );
 }
 
 /**
- * Helper function for generating a link for regeneration of a datastream.
+ * Helper function to retrieve the info for how to check datastreams.
  */
-function islandora_check_datastreams_generate_link($object, $dsid) {
-  $url = '';
-  $options = array();
+function islandora_check_datastreams_datastream_property_info($object) {
+  static $cache = array();
 
-  $cangenerate = FALSE;
-  if ($dsid === 'PDF') {
-    if (in_array('islandora:bookCModel', $object->models)) {
-      $url = 'islandora/object/' . $object->id . '/manage/book';
-    }
-  }
-  elseif ($dsid === 'TN') {
-    $cangenerate = TRUE;
-  }
-  elseif ($dsid === 'JP2') {
-    $cangenerate = TRUE;
-  }
-  elseif ($dsid === 'JPG') {
-    $cangenerate = TRUE;
-  }
-  elseif ($dsid === 'OCR') {
-    if (in_array('islandora:bookCModel', $object->models)) {
-      $url = 'islandora/object/' . $object->id . '/manage/book';
-    }
-    else {
-      $cangenerate = TRUE;
-    }
-  }
-  elseif ($dsid === 'HOCR') {
-    if (in_array('islandora:bookCModel', $object->models)) {
-      $url = 'islandora/object/' . $object->id . '/manage/book';
-    }
-    else {
-      $cangenerate = TRUE;
-    }
-  }
-  elseif ($dsid === 'TECHMD') {
-    $cangenerate = TRUE;
-  }
-  elseif ($dsid === 'HDL') {
-    $cangenerate = TRUE;
-  }
-  elseif ($dsid === 'DIMENSIONS') {
-    $cangenerate = TRUE;
-  }
+  if (!isset($cache[$object->id])) {
+    $output = array();
+    // Call hook check_datastreams_info.
+    $hooks = islandora_build_hook_list('check_datastreams_info', $object->models);
+    foreach ($hooks as $hook) {
+      $temp = module_invoke_all($hook, $object);
 
-  if (!$url && $cangenerate) {
-    $url = 'admin/islandora/check_datastreams/object/' . $object->id . '/datastream/' . $dsid . '/generate';
-  }
+      if (!empty($temp)) {
+        $output = array_merge_recursive($output, $temp);
+      }
+    }
 
-  if ($url) {
-    return l(t('generate'), $url, $options);
+    // Setup the defaults.
+    foreach ($output as $dsid => $bydsid) {
+      foreach ($bydsid as $what => $result) {
+        if (is_array($result) && isset($result['function'])) {
+          $function = $result['function'];
+          if (isset($result['file'])) {
+            $file = $result['file'];
+            require_once $file;
+          }
+          if (function_exists($function)) {
+            $output[$dsid][$what] = call_user_func($function, $object, $dsid);
+          }
+        }
+      }
+      if (!isset($bydsid['available'])) {
+        $output[$dsid]['available'] = isset($object[$dsid]);
+      }
+      if (!isset($bydsid['required'])) {
+        $models = $object->models;
+        $dsreqs = islandora_get_datastreams_requirements_from_models($models);
+        $output[$dsid]['required'] = !(isset($dsreqs[$dsid]['optional']) && $dsreqs[$dsid]['optional']);
+      }
+      if (!isset($bydsid['generatable'])) {
+        $output[$dsid]['generatable'] = FALSE;
+      }
+      if (!isset($bydsid['generatelink'])) {
+        if ($output[$dsid]['generatable']) {
+          $url = 'admin/islandora/check_datastreams/object/' . $object->id . '/datastream/' . $dsid . '/generate';
+          $output[$dsid]['generatelink'] = l(t('generate'), $url);
+        }
+      }
+    }
+
+    // Call hook check_datastreams_info alter.
+    drupal_alter($hooks, $object, $output);
+
+    $cache[$object->id] = $output;
   }
-  return '';
+  return $cache[$object->id];
 }

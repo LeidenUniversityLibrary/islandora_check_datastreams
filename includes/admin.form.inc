@@ -10,8 +10,8 @@
  *
  *  This file is part of islandora_check_datastreams.
  *
- *  islandora_check_datastreams is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
+ *  islandora_check_datastreams is free software: you can redistribute it and/or
+ *  modify it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
  *
@@ -22,7 +22,6 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- *
  */
 
 /**
@@ -70,51 +69,16 @@ function islandora_check_datastreams_generate_form_submit(array $form, array &$f
   $dsid = $form_state['values']['dsid'];
 
   $object = islandora_object_load($objectid);
-  $success = FALSE;
+  $succes = FALSE;
   if ($object) {
-    if ($dsid === 'HDL') {
-      if (module_load_include('inc', 'islandora_handle', 'includes/derivatives') !== FALSE) {
-        if (function_exists('islandora_handle_append_handle_from_configuration')) {
-          $result = islandora_handle_append_handle_from_configuration($object, FALSE, array('destination_dsid' => 'MODS'));
-        }
-        else if (function_exists('islandora_handle_append_handles_from_configuration')) {
-          $result = islandora_handle_append_handles_from_configuration($object, FALSE, array('destination_dsid' => 'MODS'));
-        }
-        if (isset($result['success']) && $result['success'] === TRUE) {
-          islandora_handle_add_to_dc_datastream($object);
-          $success = TRUE;
-        }
+    if (module_load_include('inc', 'islandora_batch_modify', 'includes/utilities') !== FALSE) {
+      if (function_exists('islandora_batch_modify_generate')) {
+        $succes = islandora_batch_modify_generate($object, $dsid, array(), 'drupal_set_message', 'notice');
       }
     }
-    elseif ($dsid === 'DIMENSIONS') {
-      if ($object['JP2']) {
-        if (module_load_include('inc', 'islandora_paged_content', 'includes/utilities') !== FALSE) {
-          islandora_paged_content_add_dimensions_relationships($object);
-          $success = TRUE;
-        }
-      }
+    if (!$succes) {
+      drupal_set_message(t('Cannot generate derivative @dsid.', array('@dsid' => $dsid)), 'error');
     }
-    else {
-      module_load_include('inc', 'islandora', 'includes/derivatives');
-      $logging = islandora_do_derivatives($object, array( 'destination_dsid' => $dsid));
-      if (count($logging) > 0) {
-        foreach ($logging as $log) {
-          if (isset($log['success']) && $log['success']) {
-            $success = TRUE;
-          }
-          else {
-            $success = FALSE;
-          }
-        }
-      }
-    }
-  }
-
-  if ($success) {
-    drupal_set_message(t('Derivative @dsid successfully created.', array('@dsid' => $dsid)), 'status');
-  }
-  else {
-    drupal_set_message(t('Failed to create derivative @dsid.', array('@dsid' => $dsid)), 'error');
   }
 
   $form_state['redirect'] = 'islandora/object/' . $objectid . '/manage/datastreams';
@@ -206,7 +170,7 @@ function islandora_check_datastreams_children_form(array $form, array &$form_sta
       $options = array();
       foreach ($dsids as $dsid => $counts) {
         $remarks = '-';
-        $required = $counts['isrequired'] ? t('required') : t('optional');
+        $required = $counts['required'] ? t('required') : t('optional');
         if ($counts['found'] < $counts['total']) {
           $remarks = format_plural(($counts['total'] - $counts['found']), 'Missing 1 @required @type datastream', 'Missing @count @required @type datastreams', array('@required' => $required, '@type' => $dsid));
         }
@@ -286,9 +250,8 @@ function islandora_check_datastreams_children_form_submit(array $form, array &$f
       }
 
       file_transfer($file->uri, $headers);
- 
+
       file_delete($filepath);
     }
   }
 }
-

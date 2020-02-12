@@ -9,8 +9,8 @@
  *
  *  This file is part of islandora_check_datastreams.
  *
- *  islandora_check_datastreams is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
+ *  islandora_check_datastreams is free software: you can redistribute it and/or
+ *  modify it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
  *
@@ -21,7 +21,6 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- *
  */
 
 
@@ -38,10 +37,10 @@ function islandora_check_datastreams_retrieve_all_child_ids($parent, &$childids)
     foreach ($colobjs as $colobj) {
       $cid = $colobj['object']['value'];
       if (!isset($childids[$cid])) {
-	$obj = islandora_object_load($cid);
-	if ($obj) {
-	  $childids[$cid] = $cid;
-	  islandora_check_datastreams_retrieve_all_child_ids($obj, $childids);
+        $obj = islandora_object_load($cid);
+        if ($obj) {
+          $childids[$cid] = $cid;
+          islandora_check_datastreams_retrieve_all_child_ids($obj, $childids);
         }
       }
     }
@@ -50,10 +49,10 @@ function islandora_check_datastreams_retrieve_all_child_ids($parent, &$childids)
     $compoundparts = islandora_compound_object_get_parts($parent->id);
     foreach ($compoundparts as $partpid) {
       if (!isset($childids[$partpid])) {
-	$obj = islandora_object_load($partpid);
-	if ($obj) {
-	  $childids[$partpid] = $partpid;
-	  islandora_check_datastreams_retrieve_all_child_ids($obj, $childids);
+        $obj = islandora_object_load($partpid);
+        if ($obj) {
+          $childids[$partpid] = $partpid;
+          islandora_check_datastreams_retrieve_all_child_ids($obj, $childids);
         }
       }
     }
@@ -62,7 +61,7 @@ function islandora_check_datastreams_retrieve_all_child_ids($parent, &$childids)
     $pages = islandora_paged_content_get_pages($parent);
     foreach ($pages as $pagepid => $pageinfo) {
       if (!isset($childids[$pagepid])) {
-	$childids[$pagepid] = $pagepid;
+        $childids[$pagepid] = $pagepid;
       }
     }
   }
@@ -78,6 +77,9 @@ function islandora_check_datastreams_dsids_by_cmodel($childids) {
     $child = islandora_object_load($childid);
     if ($child) {
       $cmodels = islandora_check_datastreams_get_cmodel_string($child);
+      if (empty($cmodels)) {
+        continue;
+      }
 
       $info = islandora_check_datastreams_datastream_property_info($child);
       foreach ($info as $dsid => $dsinfo) {
@@ -94,8 +96,8 @@ function islandora_check_datastreams_dsids_by_cmodel($childids) {
           $dsidsbycmodel[$cmodels][$dsid]['found'] = 0;
         }
         $dsidsbycmodel[$cmodels][$dsid]['total']++;
-        $dsidsbycmodel[$cmodels][$dsid]['isrequired'] = $dsinfo['isrequired'];
-        if ($dsinfo['isavailable']) {
+        $dsidsbycmodel[$cmodels][$dsid]['required'] = $dsinfo['required'];
+        if ($dsinfo['available']) {
           $dsidsbycmodel[$cmodels][$dsid]['found']++;
         }
       }
@@ -128,7 +130,7 @@ function islandora_check_datastreams_make_csv_content($objectid, $objecttype, $c
         $child = islandora_object_load($childid);
         if ($child) {
           $info = islandora_check_datastreams_datastream_property_info($child);
-          if (!(isset($info[$filterdsid]['isavailable']) && $info[$filterdsid]['isavailable'])) {
+          if (!(isset($info[$filterdsid]['available']) && $info[$filterdsid]['available'])) {
             $cmodels = islandora_check_datastreams_get_cmodel_string($child);
             if ($filtercmodel === $cmodels) {
               $csv .= $child->id . ";" . $filterdsid . ";\n";
@@ -147,9 +149,8 @@ function islandora_check_datastreams_make_csv_content($objectid, $objecttype, $c
  * Helper function to get the cmodels as a string.
  */
 function islandora_check_datastreams_get_cmodel_string($object) {
-  $cmodels = implode(',', $object->models);
-  $cmodels = str_replace(',fedora-system:FedoraObject-3.0', '', $cmodels);
-  $cmodels = str_replace('fedora-system:FedoraObject-3.0,', '', $cmodels);
-
-  return $cmodels;
+  $cmodels = array_filter($object->models, function($v) {
+    return $v !== 'fedora-system:FedoraObject-3.0';
+  });
+  return implode(',', $cmodels);
 }
