@@ -143,7 +143,7 @@ function drush_islandora_check_datastreams_check_datastreams() {
       $result .= format_plural($total, '1 object with content model @cmodel', '@count objects with content model @cmodel', array('@cmodel' => $cmodel)) . "\n";
       $isgood = TRUE;
       foreach ($dsids as $dsid => $counts) {
-        $required = $counts['isrequired'] ? t('required') : t('optional');
+        $required = $counts['required'] ? t('required') : t('optional');
         if ($counts['found'] < $counts['total']) {
           $result .= format_plural(($counts['total'] - $counts['found']), 'Missing 1 @required @type datastream', 'Missing @count @required @type datastreams', array('@required' => $required, '@type' => $dsid)) . "\n";
           $isgood = FALSE;

@@ -188,6 +188,8 @@ function islandora_check_datastreams_hook_info() {
  * Helper function to retrieve the info for how to check datastreams.
  */
 function islandora_check_datastreams_datastream_property_info($object) {
+  module_load_include('inc', 'islandora', 'includes/utilities');
+
   static $cache = array();
 
   if (!isset($cache[$object->id])) {
