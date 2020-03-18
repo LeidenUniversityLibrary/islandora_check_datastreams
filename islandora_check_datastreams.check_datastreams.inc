@@ -33,16 +33,31 @@ function islandora_check_datastreams_check_datastreams_info($object) {
     $handle_results = islandora_handle_retrieve_configurations_by_cmodels($object->models);
     $result['HDL']['required'] = (count($handle_results) > 0);
     $result['HDL']['generatable'] = TRUE;
+    $target = NULL;
     if (function_exists('islandora_handle_retrieve_selected_handler')) {
       $handler_class = islandora_handle_retrieve_selected_handler();
       $handler = new $handler_class();
-      $result['HDL']['available'] = $handler->readHandle($object);
+      $target = $handler->readHandle($object);
+      $handle = $handler->getFullHandle($object);
+      $newtarget = $handler->constructTargetUrl($object);
     }
     elseif (function_exists('islandora_handle_query_for_handle')) {
-      $result['HDL']['available'] = islandora_handle_query_for_handle($object);
+      $target = islandora_handle_query_for_handle($object);
+      $handle = islandora_handle_construct_url($object);
+      $suffix = islandora_handle_construct_suffix($object);
+      $newtarget = islandora_handle_construct_target_url($suffix);
     }
-    if ($result['HDL']['required']) {
-      $result['HDL']['remark'] = t('Missing required handle');
+    if ($target) {
+      $result['HDL']['available'] = TRUE;
+      $result['HDL']['include'] = TRUE;
+      $result['HDL']['remark'] = t('Handle %handle targets %target', array('%handle' => $handle, '%target' => $target));
+      $result['HDL']['generatable'] = ($target !== $newtarget);
+    }
+    else {
+      $result['HDL']['available'] = FALSE;
+      if ($result['HDL']['required']) {
+        $result['HDL']['remark'] = t('Missing required handle');
+      }
     }
   }
   if (module_load_include('module', 'islandora_fits', 'islandora_fits') !== FALSE) {

@@ -119,7 +119,7 @@ function islandora_check_datastreams_preprocess_islandora_default_edit(array &$v
 
   $info = islandora_check_datastreams_datastream_property_info($islandora_object, TRUE);
   foreach ($info as $dsid => $dsinfo) {
-    if (!$dsinfo['available']) {
+    if (!$dsinfo['available'] || (isset($dsinfo['include']) && $dsinfo['include'])) {
       $row = array();
       $row[] = array(
         'class' => 'datastream-id',
