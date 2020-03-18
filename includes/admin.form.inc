@@ -32,7 +32,7 @@
  * @param array $form_state
  *   The Drupal form state.
  */
-function islandora_check_datastreams_generate_form(array $form, array &$form_state, $objectid, $dsid) {
+function islandora_check_datastreams_generate_form(array $form, array &$form_state, $objectid, $dsid, $force = FALSE) {
   $form = array();
 
   $form['generate'] = array(
@@ -48,6 +48,10 @@ function islandora_check_datastreams_generate_form(array $form, array &$form_sta
   $form['generate']['dsid'] = array(
     '#type' => 'hidden',
     '#default_value' => $dsid,
+  );
+  $form['generate']['force'] = array(
+    '#type' => 'hidden',
+    '#default_value' => $force,
   );
   $form['generate']['submit'] = array(
     '#type' => 'submit',
@@ -67,13 +71,15 @@ function islandora_check_datastreams_generate_form(array $form, array &$form_sta
 function islandora_check_datastreams_generate_form_submit(array $form, array &$form_state) {
   $objectid = $form_state['values']['objectid'];
   $dsid = $form_state['values']['dsid'];
+  $force = $form_state['values']['force'];
 
   $object = islandora_object_load($objectid);
   $succes = FALSE;
+  $options = array('force' => $force);
   if ($object) {
     if (module_load_include('inc', 'islandora_batch_modify', 'includes/utilities') !== FALSE) {
       if (function_exists('islandora_batch_modify_generate')) {
-        $succes = islandora_batch_modify_generate($object, $dsid, array(), 'drupal_set_message', 'notice');
+        $succes = islandora_batch_modify_generate($object, $dsid, $options, 'drupal_set_message', 'notice');
       }
     }
     if (!$succes) {

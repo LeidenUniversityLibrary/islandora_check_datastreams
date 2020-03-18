@@ -51,7 +51,12 @@ function islandora_check_datastreams_check_datastreams_info($object) {
       $result['HDL']['available'] = TRUE;
       $result['HDL']['include'] = TRUE;
       $result['HDL']['remark'] = t('Handle %handle targets %target', array('%handle' => $handle, '%target' => $target));
-      $result['HDL']['generatable'] = ($target !== $newtarget);
+      if ($target !== $newtarget) {
+        $result['HDL']['regeneratable'] = TRUE;
+      }
+      else {
+        $result['HDL']['generatable'] = FALSE;
+      }
     }
     else {
       $result['HDL']['available'] = FALSE;
