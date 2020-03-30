@@ -40,6 +40,14 @@ function islandora_check_datastreams_menu() {
       'file' => 'includes/admin.form.inc',
       'access arguments' => array(ISLANDORA_CHECK_DATASTREAMS_GENERATE),
     ),
+    'admin/islandora/check_datastreams/object/%/datastream/%/regenerate' => array(
+      'title' => 'Regenerate datastream',
+      'type' => MENU_CALLBACK,
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('islandora_check_datastreams_generate_form', 4, 6, TRUE),
+      'file' => 'includes/admin.form.inc',
+      'access arguments' => array(ISLANDORA_CHECK_DATASTREAMS_GENERATE),
+    ),
     'admin/islandora/check_datastreams/check_children' => array(
       'title' => 'Check children of an object or batch',
       'type' => MENU_SUGGESTED_ITEM,
@@ -119,7 +127,7 @@ function islandora_check_datastreams_preprocess_islandora_default_edit(array &$v
 
   $info = islandora_check_datastreams_datastream_property_info($islandora_object, TRUE);
   foreach ($info as $dsid => $dsinfo) {
-    if (!$dsinfo['available']) {
+    if (!$dsinfo['available'] || (isset($dsinfo['include']) && $dsinfo['include'])) {
       $row = array();
       $row[] = array(
         'class' => 'datastream-id',
@@ -230,7 +238,11 @@ function islandora_check_datastreams_datastream_property_info($object) {
         $output[$dsid]['generatable'] = FALSE;
       }
       if (!isset($bydsid['generatelink'])) {
-        if ($output[$dsid]['generatable']) {
+        if (isset($output[$dsid]['regeneratable']) && $output[$dsid]['regeneratable']) {
+          $url = 'admin/islandora/check_datastreams/object/' . $object->id . '/datastream/' . $dsid . '/regenerate';
+          $output[$dsid]['generatelink'] = l(t('regenerate'), $url);
+        }
+        elseif ($output[$dsid]['generatable']) {
           $url = 'admin/islandora/check_datastreams/object/' . $object->id . '/datastream/' . $dsid . '/generate';
           $output[$dsid]['generatelink'] = l(t('generate'), $url);
         }
