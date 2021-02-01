@@ -207,3 +207,73 @@ function islandora_check_datastreams_ir_citationcmodel_check_datastreams_info($o
     ),
   );
 }
+
+/**
+ * Implements hook_cmodel_pid_check_datastreams_info().
+ */
+function islandora_check_datastreams_islandora_newspapercmodel_check_datastreams_info($object) {
+  $hasnewspapermodule = (module_load_include('module', 'islandora_newspaper') !== FALSE);
+  return array(
+    'TN' => array(
+      'required' => FALSE,
+      'generatable' => $hasnewspapermodule,
+    ),
+  );
+}
+
+/**
+ * Implements hook_cmodel_pid_check_datastreams_info().
+ */
+function islandora_check_datastreams_islandora_newspaperissuecmodel_check_datastreams_info($object) {
+  $hasnewspapermodule = (module_load_include('module', 'islandora_newspaper') !== FALSE);
+  $haspdfmodule = (module_load_include('inc', 'islandora_pdf', 'includes/derivatives') !== FALSE);
+  $generatelink = l(t('generate'), 'islandora/object/' . $object->id . '/manage/issue');
+  return array(
+    'PDF' => array(
+      'required' => FALSE,
+      'generatable' => ($hasnewspapermodule && $haspdfmodule),
+      'generatelink' => $generatelink,
+    ),
+    'TN' => array(
+      'required' => FALSE,
+      'generatable' => $hasnewspapermodule,
+      'generatelink' => $generatelink,
+    ),
+  );
+}
+
+/**
+ * Implements hook_cmodel_pid_check_datastreams_info().
+ */
+function islandora_check_datastreams_islandora_newspaperpagecmodel_check_datastreams_info($object) {
+  $hasnewspapermodule = (module_load_include('module', 'islandora_newspaper') !== FALSE);
+  $isgeneratable = (module_load_include('inc', 'islandora_paged_content', 'includes/utilities') !== FALSE);
+  $generatelink = l(t('generate'), 'islandora/object/' . $object->id . '/manage/newspaper_page');
+  return array(
+    'DIMENSIONS' => array(
+      'available' => (isset($object['JP2']) && $object['JP2']->relationships->get(ISLANDORA_RELS_EXT_URI, 'width')),
+      'required' => TRUE,
+      'generatable' => $isgeneratable && isset($object['JP2'], $object['OBJ']),
+    ),
+    'PDF' => array(
+      'required' => FALSE,
+      'generatable' => ($hasnewspapermodule && $haspdfmodule),
+      'generatelink' => $generatelink,
+    ),
+    'JP2' => array(
+      'required' => TRUE,
+      'generatable' => $isgeneratable && isset($object['OBJ']),
+      'generatelink' => $generatelink,
+    ),
+    'JPG' => array(
+      'required' => TRUE,
+      'generatable' => $isgeneratable && isset($object['OBJ']),
+      'generatelink' => $generatelink,
+    ),
+    'TN' => array(
+      'required' => TRUE,
+      'generatable' => $isgeneratable && isset($object['OBJ']),
+      'generatelink' => $generatelink,
+    ),
+  );
+}
