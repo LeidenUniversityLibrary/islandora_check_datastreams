@@ -179,6 +179,12 @@ function islandora_check_datastreams_preprocess_islandora_default_edit(array &$v
   elseif (in_array('islandora:compoundCModel', $islandora_object->models)) {
     $variables['check_ds_children'] = l(t('Check the items of this compound'), 'admin/islandora/check_datastreams/check_children/' . $islandora_object->id . '/' . 'compound');
   }
+  elseif (in_array('islandora:newspaperCModel', $islandora_object->models)) {
+    $variables['check_ds_children'] = l(t('Check the issues of this newspaper'), 'admin/islandora/check_datastreams/check_children/' . $islandora_object->id . '/' . 'newspaper');
+  }
+  elseif (in_array('islandora:newspaperIssueCModel', $islandora_object->models)) {
+    $variables['check_ds_children'] = l(t('Check the pages of this issue'), 'admin/islandora/check_datastreams/check_children/' . $islandora_object->id . '/' . 'issue');
+  }
 }
 
 /**

@@ -31,7 +31,7 @@ function islandora_check_datastreams_drush_command() {
     'description' => 'Checks the datastreams of the objects of a specific collection, book, compound or batch set.',
     'options' => array(
       'objectid' => 'The object id of a specific collection, book or compound, or the batch set id.',
-      'objecttype' => 'The type of the object. Possible values are: collection, book, compound or batch.',
+      'objecttype' => 'The type of the object. Possible values are: collection, book, compound, newspaper, issue or batch.',
     ),
     'aliases' => array('cds'),
     'examples' => array(
@@ -42,8 +42,8 @@ function islandora_check_datastreams_drush_command() {
   $items['missing_datastreams_report'] = array(
     'description' => 'Reports the missing datastreams of a specific type of the objects of a specific collection, book, compound or batch set.',
     'options' => array(
-      'objectid' => 'The object id of a specific collection, book or compound, or the batch set id.',
-      'objecttype' => 'The type of the object. Possible values are: collection, book, compound or batch.',
+      'objectid' => 'The object id of a specific collection, book, compound, newspaper or issue, or the batch set id.',
+      'objecttype' => 'The type of the object. Possible values are: collection, book, compound, newspaper, issue or batch.',
       'cmodel' => 'The content model of the objects of the datastreams you are interested in.',
       'dsid' => 'The datastream id of the objects you want in the report.',
       'dsids' => 'Same as --dsid, allows multiple datastream ids. Should be a comma separated list of datastream ids.',
@@ -67,8 +67,8 @@ function drush_islandora_check_datastreams_check_datastreams_validate() {
   $objectid = drush_get_option('objectid');
   $objecttype = drush_get_option('objecttype');
 
-  if (!($objecttype === 'collection' || $objecttype === 'book' || $objecttype === 'compound' || $objecttype === 'batch')) {
-    return drush_set_error("objecttype should be one of these: collection, book, compound or batch");
+  if (!($objecttype === 'collection' || $objecttype === 'book' || $objecttype === 'compound' || $objecttype === 'batch' || $objecttype === 'newspaper' || $objecttype === 'issue')) {
+    return drush_set_error("objecttype should be one of these: collection, book, compound, newspaper, issue or batch");
   }
   if ($objecttype === 'collection') {
     $collection = islandora_object_load($objectid);
@@ -93,6 +93,18 @@ function drush_islandora_check_datastreams_check_datastreams_validate() {
     $itemids = islandora_batch_get_queued_items_for_set($objectid);
     if (!($itemids && count($itemids) > 0)) {
       return drush_set_error("Identifier '$objectid' does not resolve to a batch set");
+    }
+  }
+  elseif ($objecttype === 'newspaper') {
+    $newspaper = islandora_object_load($objectid);
+    if (!($newspaper && in_array('islandora:newspaperCModel', $newspaper->models))) {
+      return drush_set_error("Identifier '$objectid' does not resolve to a newspaper");
+    }
+  }
+  elseif ($objecttype === 'issue') {
+    $issue = islandora_object_load($objectid);
+    if (!($issue && in_array('islandora:newspaperIssueCModel', $issue->models))) {
+      return drush_set_error("Identifier '$objectid' does not resolve to a newspaper issue");
     }
   }
   return TRUE;
@@ -130,6 +142,18 @@ function drush_islandora_check_datastreams_check_datastreams() {
     $itemids = islandora_batch_get_queued_items_for_set($objectid);
     foreach ($itemids as $itemid) {
       $childids[] = $itemid;
+    }
+  }
+  elseif ($objecttype === 'newspaper') {
+    $newspaper = islandora_object_load($objectid);
+    if ($newspaper && in_array('islandora:newspaperCModel', $newspaper->models)) {
+      islandora_check_datastreams_retrieve_all_child_ids($newspaper, $childids);
+    }
+  }
+  elseif ($objecttype === 'issue') {
+    $issue = islandora_object_load($objectid);
+    if ($issue && in_array('islandora:newspaperIssueCModel', $issue->models)) {
+      islandora_check_datastreams_retrieve_all_child_ids($issue, $childids);
     }
   }
 

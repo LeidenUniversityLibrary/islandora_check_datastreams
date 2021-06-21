@@ -121,6 +121,8 @@ function islandora_check_datastreams_children_form(array $form, array &$form_sta
       'book' => t('Book'),
       'compound' => t('Compound'),
       'batch' => t('Batch set'),
+      'newspaper' => t('Newspaper'),
+      'issue' => t('Issue'),
     ),
     '#default_value' => $objecttype,
   );
@@ -159,6 +161,18 @@ function islandora_check_datastreams_children_form(array $form, array &$form_sta
     $itemids = islandora_batch_get_queued_items_for_set($objectid);
     foreach ($itemids as $itemid) {
       $childids[$itemid] = $itemid;
+    }
+  }
+  elseif ($objecttype === 'newspaper') {
+    $newspaper = islandora_object_load($objectid);
+    if ($newspaper && in_array('islandora:newspaperCModel', $newspaper->models)) {
+      islandora_check_datastreams_retrieve_all_child_ids($newspaper, $childids);
+    }
+  }
+  elseif ($objecttype === 'issue') {
+    $issue = islandora_object_load($objectid);
+    if ($issue && in_array('islandora:newspaperIssueCModel', $issue->models)) {
+      islandora_check_datastreams_retrieve_all_child_ids($issue, $childids);
     }
   }
 
